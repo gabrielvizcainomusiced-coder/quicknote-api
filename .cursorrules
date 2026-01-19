@@ -1,44 +1,413 @@
+# QuickNote API - Cursor AI Rules
+
 You are working on the QuickNote API backend built with Node.js and Express.
 
 ## Project Context
 - REST API for a note-taking application
 - Uses PostgreSQL for data persistence
-- Follows test-driven development practices
-- All database queries use parameterized queries to prevent SQL injection
+- Follows test-driven development (TDD) practices
+- All database queries use parameterized queries ($1, $2) to prevent SQL injection
+- Current test coverage: 85% for controllers, 100% for routes
+
+## Core Principles
+1. **Test-First Development**: Always write or update tests BEFORE changing implementation code
+2. **Security**: Never trust user input - always validate and sanitize
+3. **Error Handling**: Every async operation must have proper try/catch
+4. **Code Quality**: Maintain or improve test coverage with every change
 
 ## Coding Standards
-- Use async/await for asynchronous operations
-- Always write tests BEFORE implementation (TDD)
-- Follow RESTful conventions
-- Use proper HTTP status codes (200, 201, 400, 404, 500)
-- Validate all user inputs
-- Use environment variables for configuration
+
+### Async/Await
+- Use async/await for all asynchronous operations
+- Never use callbacks or raw promises in new code
+- Always wrap async operations in try/catch blocks
+
+### RESTful Conventions
+- POST /api/notes - Create (returns 201)
+- GET /api/notes - Read all (returns 200)
+- GET /api/notes/:id - Read one (returns 200 or 404)
+- PUT /api/notes/:id - Update (returns 200 or 404)
+- DELETE /api/notes/:id - Delete (returns 200 or 404)
+
+### HTTP Status Codes
+- 200: Success
+- 201: Created
+- 400: Bad Request (validation errors)
+- 404: Not Found
+- 500: Server Error
+
+### Input Validation
+- Always validate title and content are present
+- Trim whitespace from all string inputs
+- Reject empty strings after trimming
+- Return descriptive error messages
+
+### Environment Variables
 - Never commit .env files
+- Use process.env for all configuration
+- Provide defaults for non-sensitive values
+- Document all required variables in .env.example
 
 ## Testing Requirements
-- Every controller function must have unit tests
-- Every route must have integration tests
-- Test coverage should be above 70%
-- Run tests with: npm test
-- Run tests in watch mode: npm run test:watch
 
-## Database
-- Use parameterized queries ($1, $2, etc.) to prevent SQL injection
-- Always handle database errors gracefully
-- Close database connections properly
-- Use transactions for multi-step operations
+### Before Making Changes
+1. Run existing tests: `npm test`
+2. Ensure all tests pass
+3. Check current coverage: look at terminal output
 
-## API Design
-- All endpoints start with /api
-- POST /api/notes - Create note
-- GET /api/notes - Get all notes
-- GET /api/notes/:id - Get single note
-- PUT /api/notes/:id - Update note
-- DELETE /api/notes/:id - Delete note
+### Test-Driven Development Workflow
+1. **Write a failing test first**
+   ```javascript
+   it('should return 400 if title is missing', async () => {
+     // Test implementation
+   });
+   ```
 
-## When generating code:
-1. Write the test first (TDD approach)
-2. Run the test to see it fail
-3. Write minimal code to make it pass
-4. Refactor if needed
-5. Ensure test coverage remains above 70%
+2. **Run the test** - it should fail: `npm test`
+
+3. **Write minimal code to make it pass**
+
+4. **Refactor if needed** while keeping tests green
+
+5. **Ensure coverage doesn't drop**
+
+### Test File Locations
+- Unit tests: `tests/unit/noteController.test.js`
+- Integration tests: `tests/integration/noteRoutes.test.js`
+
+### Running Tests
+```bash
+npm test                 # Run all tests with coverage
+npm run test:watch       # Watch mode for active development
+npm run test:unit        # Only unit tests
+npm run test:integration # Only integration tests
+```
+
+### Test Coverage Goals
+- Overall: >70%
+- Controllers: >80%
+- Routes: 100%
+- New code should maintain or improve coverage
+
+### What to Test
+
+#### Unit Tests (noteController.test.js)
+Test each controller function in isolation:
+- ✅ Happy path (valid input, successful operation)
+- ✅ Validation errors (missing fields, empty strings)
+- ✅ Database errors (mocked failures)
+- ✅ Edge cases (whitespace, special characters)
+
+Example test structure:
+```javascript
+describe('createNote', () => {
+  it('should create a note with valid data', async () => {
+    // Arrange: Set up mocks and input
+    // Act: Call the function
+    // Assert: Verify the result
+  });
+  
+  it('should return 400 if title is missing', async () => {
+    // Test validation
+  });
+  
+  it('should return 500 if database fails', async () => {
+    // Test error handling
+  });
+});
+```
+
+#### Integration Tests (noteRoutes.test.js)
+Test complete request/response cycles:
+- ✅ Full HTTP requests with supertest
+- ✅ Verify status codes
+- ✅ Verify response bodies
+- ✅ Test all endpoints
+
+Example integration test:
+```javascript
+it('should create a new note', async () => {
+  const response = await request(app)
+    .post('/api/notes')
+    .send({ title: 'Test', content: 'Content' })
+    .expect(201);
+    
+  expect(response.body).toHaveProperty('id');
+  expect(response.body.title).toBe('Test');
+});
+```
+
+### Mocking in Tests
+- Mock the Note model in unit tests: `jest.mock('../../src/models/Note')`
+- Mock database responses, not the database itself
+- Each test should set up its own mocks with `beforeEach`
+- Clear mocks between tests: `jest.clearAllMocks()`
+
+## Database Best Practices
+
+### SQL Queries
+- Always use parameterized queries with $1, $2, etc.
+- NEVER concatenate user input into SQL strings
+- Example:
+  ```javascript
+  // ✅ GOOD
+  const query = 'SELECT * FROM notes WHERE id = $1';
+  await pool.query(query, [id]);
+  
+  // ❌ BAD - SQL injection risk!
+  const query = `SELECT * FROM notes WHERE id = ${id}`;
+  ```
+
+### Error Handling
+- Catch and log all database errors
+- Return user-friendly error messages
+- Don't expose database details to clients
+- Example:
+  ```javascript
+  try {
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Database error:', error);
+    throw new Error('Failed to fetch note');
+  }
+  ```
+
+## Common Tasks & Examples
+
+### Adding a New Endpoint
+
+1. **Write the test first** (tests/integration/noteRoutes.test.js):
+```javascript
+describe('PATCH /api/notes/:id/favorite', () => {
+  it('should mark a note as favorite', async () => {
+    const response = await request(app)
+      .patch('/api/notes/1/favorite')
+      .expect(200);
+    
+    expect(response.body.favorite).toBe(true);
+  });
+});
+```
+
+2. **Add the route** (src/routes/noteRoutes.js):
+```javascript
+router.patch('/notes/:id/favorite', noteController.favoriteNote);
+```
+
+3. **Write controller test** (tests/unit/noteController.test.js):
+```javascript
+describe('favoriteNote', () => {
+  it('should toggle favorite status', async () => {
+    // Test implementation
+  });
+});
+```
+
+4. **Implement controller** (src/controllers/noteController.js):
+```javascript
+async favoriteNote(req, res) {
+  try {
+    const { id } = req.params;
+    const note = await Note.toggleFavorite(id);
+    
+    if (!note) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+    
+    res.json(note);
+  } catch (error) {
+    console.error('Error favoriting note:', error);
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+}
+```
+
+5. **Add model method** (src/models/Note.js):
+```javascript
+static async toggleFavorite(id) {
+  const query = `
+    UPDATE notes 
+    SET favorite = NOT favorite 
+    WHERE id = $1 
+    RETURNING *
+  `;
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
+}
+```
+
+6. **Run tests and verify coverage**
+
+### Debugging Failed Tests
+
+1. **Read the error message carefully**
+2. **Check what was expected vs what was received**
+3. **Add console.logs in the test to inspect values**
+4. **Run single test**: `npm test -- -t "test name"`
+5. **Check if mocks are set up correctly**
+
+### When Tests Fail After Changes
+
+1. **Don't skip or delete failing tests**
+2. **Understand WHY the test is failing**
+3. **Update tests if requirements changed**
+4. **Fix code if tests are correct**
+5. **Never commit with failing tests**
+
+## File Structure Understanding
+
+```
+src/
+├── app.js              # Express server setup, middleware, routes
+├── config/
+│   └── database.js     # PostgreSQL connection pool
+├── controllers/
+│   └── noteController.js   # Request handlers, business logic
+├── models/
+│   └── Note.js         # Database queries (SQL)
+├── routes/
+│   └── noteRoutes.js   # URL to controller mapping
+└── middleware/
+    └── errorHandler.js # Global error handling
+
+tests/
+├── unit/
+│   └── noteController.test.js   # Test individual functions
+└── integration/
+    └── noteRoutes.test.js       # Test full request/response
+```
+
+## Common Mistakes to Avoid
+
+❌ Writing code before tests
+❌ Skipping input validation
+❌ Exposing database errors to users
+❌ Using string concatenation in SQL
+❌ Forgetting to handle errors
+❌ Not trimming user input
+❌ Committing .env files
+❌ Lowering test coverage
+
+✅ Write tests first
+✅ Validate all inputs
+✅ Use try/catch everywhere
+✅ Use parameterized queries
+✅ Trim and sanitize input
+✅ Return helpful error messages
+✅ Keep coverage high
+
+## When Stuck
+
+1. **Check existing tests** - they show patterns to follow
+2. **Look at similar functionality** - copy the pattern
+3. **Run tests frequently** - catch issues early
+4. **Read error messages** - they usually tell you what's wrong
+5. **Check test coverage** - see what's not tested
+
+## Example Code Patterns
+
+### Controller Function Template
+```javascript
+async functionName(req, res) {
+  try {
+    // 1. Extract and validate input
+    const { field } = req.body;
+    if (!field) {
+      return res.status(400).json({ error: 'Field is required' });
+    }
+    
+    // 2. Process/call model
+    const result = await Model.method(field);
+    
+    // 3. Handle not found
+    if (!result) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
+    // 4. Return success
+    res.status(200).json(result);
+  } catch (error) {
+    // 5. Handle errors
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Operation failed' });
+  }
+}
+```
+
+### Test Template
+```javascript
+describe('functionName', () => {
+  let req, res;
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = { body: {}, params: {} };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+  });
+  
+  it('should handle happy path', async () => {
+    // Arrange
+    req.body = { field: 'value' };
+    Model.method.mockResolvedValue({ id: 1 });
+    
+    // Act
+    await controller.functionName(req, res);
+    
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ id: 1 });
+  });
+  
+  it('should handle validation error', async () => {
+    req.body = {}; // Missing field
+    
+    await controller.functionName(req, res);
+    
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+```
+
+## Remember
+
+- **Tests are documentation** - they show how code should work
+- **Failing tests are good** - they catch bugs before production
+- **Coverage is a guide** - 100% coverage doesn't mean bug-free
+- **TDD feels slow at first** - but prevents bugs and speeds up later
+- **When in doubt, check the tests** - they show the expected behavior
+
+## Quick Commands Reference
+
+```bash
+# Start development
+docker-compose up          # Start API + database
+npm run dev               # Start with auto-reload (if Docker not used)
+
+# Testing
+npm test                  # Run all tests with coverage
+npm run test:watch        # Auto-rerun tests on changes
+npm run test:unit         # Only unit tests
+npm run test:integration  # Only integration tests
+
+# Docker
+docker-compose up         # Start containers
+docker-compose down       # Stop containers
+docker-compose down -v    # Stop and remove data
+docker-compose logs -f    # View logs
+docker ps                 # List running containers
+
+# Debugging
+curl http://localhost:3001/health              # Test health endpoint
+curl http://localhost:3001/api/notes           # Test GET
+curl -X POST http://localhost:3001/api/notes \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","content":"Content"}'    # Test POST
+```
+
+---
+
+This file helps Claude (and you) understand the codebase structure, testing requirements, and best practices. Always refer back to it when making changes!
