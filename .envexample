@@ -1,0 +1,9 @@
+# Server Configuration
+NODE_ENV=development
+PORT=3001
+
+# Database Configuration
+DATABASE_URL=postgresql://postgres:password@localhost:5432/quicknote
+
+# For Docker
+# DATABASE_URL=postgresql://postgres:password@db:5432/quicknote
