@@ -5,6 +5,12 @@ const Note = require('../../src/models/Note');
 // Mock the Note model to avoid actual database calls
 jest.mock('../../src/models/Note');
 
+const pool = require('../../src/config/database');
+afterAll(async () => {
+  await pool.end();
+  await new Promise(resolve => setTimeout(resolve, 100));
+});
+
 describe('Note Routes Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
