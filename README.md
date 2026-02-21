@@ -1,23 +1,25 @@
 # QuickNote API
 
-A RESTful API backend for the QuickNote application, built with Node.js, Express, and PostgreSQL.
+A RESTful API backend for the QuickNote application, built with Node.js, Express, and PostgreSQL. Designed as a portfolio project demonstrating full-stack development, security-aware design, and production-ready practices.
 
 ## 🚀 Features
 
-- **CRUD Operations** - Create, Read, Update, and Delete notes
-- **PostgreSQL Database** - Secure and scalable data storage
-- **Docker Support** - Easy local development setup
-- **Comprehensive Testing** - 85% controller test coverage with Jest
-- **Input Validation** - Server-side validation for data integrity
-- **Error Handling** - Proper error responses with appropriate HTTP status codes
+- **CRUD Operations** — Create, Read, Update, and Delete notes
+- **PostgreSQL Database** — Secure and scalable data storage
+- **Docker Support** — Easy local development setup with Docker Compose
+- **Input Validation** — Multi-layer server-side validation (presence, type, empty, length)
+- **XSS Protection** — HTML tag sanitization prevents stored cross-site scripting attacks
+- **SQL Injection Prevention** — Parameterized queries throughout
+- **Comprehensive Testing** — 37 tests, 100% coverage on controllers and routes
+- **Error Handling** — Proper HTTP status codes and user-friendly error messages
 
 ## 🛠️ Tech Stack
 
-- **Node.js** - JavaScript runtime
-- **Express** - Web framework
-- **PostgreSQL** - Relational database
-- **Docker & Docker Compose** - Containerization
-- **Jest & Supertest** - Testing framework
+- **Node.js** — JavaScript runtime
+- **Express** — Web framework
+- **PostgreSQL** — Relational database
+- **Docker & Docker Compose** — Containerization
+- **Jest & Supertest** — Testing framework
 
 ## 📋 Prerequisites
 
@@ -43,18 +45,18 @@ npm install
 ### 3. Set Up Environment Variables
 
 ```bash
-cp .env.example .env
+cp .envexample .env
 ```
 
-The default `.env` settings work for Docker. No changes needed for local development.
+The default `.env` settings work out of the box with Docker. No changes needed for local development.
 
-### 4. Start the Application with Docker
+### 4. Start with Docker
 
 ```bash
 # Start API and PostgreSQL database
 docker-compose up
 
-# Or run in background
+# Or run in the background
 docker-compose up -d
 ```
 
@@ -71,6 +73,7 @@ Expected response: `{"status":"ok","message":"QuickNote API is running"}`
 ## 📚 API Endpoints
 
 ### Base URL
+
 ```
 http://localhost:3001/api
 ```
@@ -80,14 +83,24 @@ http://localhost:3001/api
 | Method | Endpoint | Description | Request Body |
 |--------|----------|-------------|--------------|
 | `POST` | `/notes` | Create a new note | `{ "title": "string", "content": "string" }` |
-| `GET` | `/notes` | Get all notes | - |
-| `GET` | `/notes/:id` | Get a single note | - |
+| `GET` | `/notes` | Get all notes | — |
+| `GET` | `/notes/:id` | Get a single note | — |
 | `PUT` | `/notes/:id` | Update a note | `{ "title": "string", "content": "string" }` |
-| `DELETE` | `/notes/:id` | Delete a note | - |
+| `DELETE` | `/notes/:id` | Delete a note | — |
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| `title` | Required, non-empty (after trimming whitespace), max 255 characters |
+| `content` | Required, non-empty (after trimming whitespace), max 10,000 characters |
+
+Both fields are sanitized to strip HTML tags before saving.
 
 ### Example Requests
 
 **Create a Note:**
+
 ```bash
 curl -X POST http://localhost:3001/api/notes \
   -H "Content-Type: application/json" \
@@ -95,16 +108,19 @@ curl -X POST http://localhost:3001/api/notes \
 ```
 
 **Get All Notes:**
+
 ```bash
 curl http://localhost:3001/api/notes
 ```
 
 **Get Single Note:**
+
 ```bash
 curl http://localhost:3001/api/notes/1
 ```
 
 **Update Note:**
+
 ```bash
 curl -X PUT http://localhost:3001/api/notes/1 \
   -H "Content-Type: application/json" \
@@ -112,38 +128,78 @@ curl -X PUT http://localhost:3001/api/notes/1 \
 ```
 
 **Delete Note:**
+
 ```bash
 curl -X DELETE http://localhost:3001/api/notes/1
 ```
 
-## 🧪 Running Tests
+### Response Formats
+
+**Success:**
+
+```json
+{
+  "id": 1,
+  "title": "My Note",
+  "content": "Note content",
+  "created_at": "2026-01-19T04:47:19.038Z",
+  "updated_at": "2026-01-19T04:47:19.038Z"
+}
+```
+
+**Error (400 Validation):**
+
+```json
+{
+  "error": "Title cannot be empty"
+}
+```
+
+### HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad Request (validation error) |
+| `404` | Not Found |
+| `500` | Server Error |
+
+## 🧪 Testing
 
 ```bash
-# Run all tests with coverage
+# Run all tests with coverage report
 npm test
 
-# Run tests in watch mode (auto-rerun on changes)
+# Watch mode (reruns on file changes)
 npm run test:watch
 
-# Run only unit tests
+# Unit tests only
 npm run test:unit
 
-# Run only integration tests
+# Integration tests only
 npm run test:integration
 ```
 
 ### Test Coverage
 
-Current coverage: **85% for controllers**
-
 ```
 --------------------|---------|----------|---------|---------|
 File                | % Stmts | % Branch | % Funcs | % Lines |
 --------------------|---------|----------|---------|---------|
-controllers/        |   85.1% |   94.4%  |  100%   |  85.1%  |
+controllers/        |  100%   |  100%    |  100%   |  100%   |
 routes/             |  100%   |  100%    |  100%   |  100%   |
 --------------------|---------|----------|---------|---------|
 ```
+
+**37 tests** covering:
+- All CRUD happy paths
+- Content and title validation (empty, whitespace-only, missing)
+- Length limit enforcement (255 char title, 10,000 char content)
+- XSS sanitization (HTML tag stripping)
+- Error handling and edge cases
+
+> `src/models/Note.js` is intentionally excluded — it contains raw database queries best covered by integration tests with a live database rather than unit tests.
 
 ## 📁 Project Structure
 
@@ -151,23 +207,26 @@ routes/             |  100%   |  100%    |  100%   |  100%   |
 quicknote-api/
 ├── src/
 │   ├── config/
-│   │   └── database.js       # PostgreSQL connection
+│   │   └── database.js         # PostgreSQL connection pool
 │   ├── controllers/
-│   │   └── noteController.js # Business logic
+│   │   └── noteController.js   # Business logic, validation, sanitization
 │   ├── models/
-│   │   └── Note.js           # Database queries
+│   │   └── Note.js             # Database queries
 │   ├── routes/
-│   │   └── noteRoutes.js     # API endpoints
+│   │   └── noteRoutes.js       # API endpoint definitions
 │   ├── middleware/
-│   │   └── errorHandler.js   # Error handling
-│   └── app.js                # Express server setup
+│   │   └── errorHandler.js     # Global error handling
+│   └── app.js                  # Express server setup
 ├── tests/
-│   ├── unit/                 # Unit tests
-│   └── integration/          # Integration tests
-├── docker-compose.yml        # Docker configuration
-├── Dockerfile                # Container image
-├── package.json              # Dependencies
-└── README.md                 # This file
+│   ├── unit/
+│   │   └── noteController.test.js    # 29 unit tests
+│   └── integration/
+│       └── noteRoutes.test.js        # 8 integration tests
+├── docker-compose.yml          # Docker configuration
+├── Dockerfile                  # Container image
+├── jest.config.js              # Test configuration
+├── package.json                # Dependencies and scripts
+└── README.md
 ```
 
 ## 🐳 Docker Commands
@@ -182,34 +241,28 @@ docker-compose up -d
 # Stop services
 docker-compose down
 
-# Stop and remove all data
+# Stop and remove all data (wipes database)
 docker-compose down -v
 
 # View logs
 docker-compose logs -f
 
-# Rebuild containers
+# Rebuild containers after code changes
 docker-compose up --build
 ```
 
-## 🔧 Development
-
-### Without Docker (Local PostgreSQL)
+## 🔧 Development Without Docker
 
 If you have PostgreSQL installed locally:
 
-1. Create a database:
 ```bash
+# 1. Create the database
 createdb quicknote
-```
 
-2. Update `.env`:
-```env
+# 2. Update .env
 DATABASE_URL=postgresql://localhost:5432/quicknote
-```
 
-3. Run the API:
-```bash
+# 3. Start the dev server
 npm run dev
 ```
 
@@ -217,73 +270,53 @@ npm run dev
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NODE_ENV` | Environment (development/production) | `development` |
+| `NODE_ENV` | Environment (`development` / `production`) | `development` |
 | `PORT` | Server port | `3001` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@localhost:5432/quicknote` |
 
+## 🔒 Security
+
+**XSS Prevention** — All user input is sanitized before saving. HTML tags are stripped using regex (`/<[^>]*>/g`), preventing stored cross-site scripting attacks.
+
+**SQL Injection Prevention** — All database queries use parameterized placeholders (`$1`, `$2`) instead of string concatenation.
+
+**Input Length Limits** — Title capped at 255 characters (matching the database `VARCHAR(255)` column), content capped at 10,000 characters to prevent abuse and performance issues.
+
+**Known Limitations (intentional for portfolio scope):** Rate limiting, authentication/authorization, HTTPS enforcement, and advanced content filtering are not implemented. These would add complexity without demonstrating the core full-stack skills this project targets.
+
 ## 🐛 Troubleshooting
 
-### Port Already in Use
+**Port already in use:**
 ```bash
-# Check what's using port 3001
 lsof -i :3001
-
-# Kill the process
 kill -9 <PID>
 ```
 
-### Docker Not Starting
+**Docker not starting:**
 ```bash
-# Check Docker is running
-docker ps
-
-# Restart Docker Desktop
-# Then try: docker-compose up
+docker ps          # verify Docker is running
+docker-compose up  # retry
 ```
 
-### Database Connection Failed
+**Database connection failed:**
 ```bash
-# Check database is running
-docker-compose ps
-
-# View database logs
-docker-compose logs db
+docker-compose ps       # check both containers are up
+docker-compose logs db  # view database-specific logs
 ```
 
-## 📝 Response Formats
+## 📝 Version History
 
-### Success Response
-```json
-{
-  "id": 1,
-  "title": "My Note",
-  "content": "Note content",
-  "created_at": "2026-01-19T04:47:19.038Z",
-  "updated_at": "2026-01-19T04:47:19.038Z"
-}
-```
-
-### Error Response
-```json
-{
-  "error": "Error message here"
-}
-```
-
-### HTTP Status Codes
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request (validation error)
-- `404` - Not Found
-- `500` - Server Error
+- **v1.1** (Jan 2026) — Code review pass: input sanitization (XSS), content validation bug fix, length limits, 100% test coverage (up from 85%, 16 → 37 tests)
+- **v1.0** (Jan 2026) — Initial full-stack implementation with PostgreSQL, Docker, and basic CRUD
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Write tests first (TDD)
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
 ## 📄 License
 
@@ -292,14 +325,11 @@ This project is open source and available under the MIT License.
 ## 👤 Author
 
 **Gabriel Vizcaino**
+
 - GitHub: [@gabrielvizcainomusiced-coder](https://github.com/gabrielvizcainomusiced-coder)
 
 ---
 
 ## Related Projects
 
-- [QuickNote Desktop](https://github.com/gabrielvizcainomusiced-coder/quicknote-desktop) - React frontend for this API
-
----
-
-Built using Node.js and Express
+- [QuickNote Desktop](https://github.com/gabrielvizcainomusiced-coder/quicknote-desktop) — React frontend for this API
