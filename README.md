@@ -10,7 +10,7 @@ A RESTful API backend for the QuickNote application, built with Node.js, Express
 - **Input Validation** — Multi-layer server-side validation (presence, type, empty, length)
 - **XSS Protection** — HTML tag sanitization prevents stored cross-site scripting attacks
 - **SQL Injection Prevention** — Parameterized queries throughout
-- **Comprehensive Testing** — 37 tests, 100% coverage on controllers and routes
+- **Comprehensive Testing** — 41 tests, 100% coverage on controllers and routes
 - **Error Handling** — Proper HTTP status codes and user-friendly error messages
 
 ## 🛠️ Tech Stack
@@ -192,7 +192,7 @@ routes/             |  100%   |  100%    |  100%   |  100%   |
 --------------------|---------|----------|---------|---------|
 ```
 
-**37 tests** covering:
+**41 tests** covering:
 - All CRUD happy paths
 - Content and title validation (empty, whitespace-only, missing)
 - Length limit enforcement (255 char title, 500 char content)
@@ -221,7 +221,7 @@ quicknote-api/
 │   ├── unit/
 │   │   └── noteController.test.js    # 29 unit tests
 │   └── integration/
-│       └── noteRoutes.test.js        # 8 integration tests
+│       └── noteRoutes.test.js        # 12 integration tests
 ├── docker-compose.yml          # Docker configuration
 ├── Dockerfile                  # Container image
 ├── jest.config.js              # Test configuration
@@ -306,7 +306,7 @@ docker-compose logs db  # view database-specific logs
 
 ## 📝 Version History
 
-- **v1.1** (Jan 2026) — Code review pass: input sanitization (XSS), content validation bug fix, length limits, 100% test coverage (up from 85%, 16 → 37 tests)
+- **v1.1** (Jan 2026) — Code review pass: input sanitization (XSS), content validation bug fix, length limits, 100% test coverage (up from 85%, 16 → 41 tests)
 - **v1.0** (Jan 2026) — Initial full-stack implementation with PostgreSQL, Docker, and basic CRUD
 
 ## 🤝 Contributing

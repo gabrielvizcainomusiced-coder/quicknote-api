@@ -41,7 +41,7 @@ describe('Note Routes Integration Tests', () => {
       expect(response.body.content).toBe('Test Content');
     });
 
-    it('should return 400 for invalid data', async () => {
+    it('should return 400 for missing content', async () => {
       const response = await request(app)
         .post('/api/notes')
         .send({
@@ -51,6 +51,20 @@ describe('Note Routes Integration Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
+    });
+
+    // NEW: Whitespace-only content should also be rejected
+    it('should return 400 for whitespace-only content', async () => {
+      const response = await request(app)
+        .post('/api/notes')
+        .send({
+          title: 'Test Note',
+          content: '   '
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Content cannot be empty');
     });
   });
 
@@ -119,6 +133,33 @@ describe('Note Routes Integration Tests', () => {
 
       expect(response.body.title).toBe('Updated Title');
     });
+
+    // NEW: Invalid data should be rejected
+    it('should return 400 for invalid update data', async () => {
+      const response = await request(app)
+        .put('/api/notes/1')
+        .send({
+          title: '   ',
+          content: 'Updated Content'
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Title cannot be empty');
+    });
+
+    // NEW: Updating a note that doesn't exist
+    it('should return 404 for non-existent note', async () => {
+      Note.update.mockResolvedValue(null);
+
+      await request(app)
+        .put('/api/notes/999')
+        .send({
+          title: 'Updated Title',
+          content: 'Updated Content'
+        })
+        .expect(404);
+    });
   });
 
   describe('DELETE /api/notes/:id', () => {
@@ -137,6 +178,15 @@ describe('Note Routes Integration Tests', () => {
 
       expect(response.body).toHaveProperty('message');
       expect(response.body.message).toBe('Note deleted successfully');
+    });
+
+    // NEW: Deleting a note that doesn't exist
+    it('should return 404 for non-existent note', async () => {
+      Note.delete.mockResolvedValue(null);
+
+      await request(app)
+        .delete('/api/notes/999')
+        .expect(404);
     });
   });
 });
