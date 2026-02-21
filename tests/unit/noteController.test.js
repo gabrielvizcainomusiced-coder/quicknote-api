@@ -1,40 +1,6 @@
 const noteController = require('../../src/controllers/noteController');
 const Note = require('../../src/models/Note');
 
-/**
- * UPDATES MADE TO THIS FILE:
- * 
- * 1. Added 5 new tests for content validation
- *    - Tests empty content (both create and update)
- *    - Tests whitespace-only content
- *    - Tests both empty title AND content scenario
- * 
- * 2. Added 4 new tests for length validation
- *    - Tests title too long (>255 chars)
- *    - Tests content too long (>10,000 chars)
- *    - For both create and update operations
- * 
- * 3. Added 2 tests for sanitization
- *    - Tests HTML tags are stripped
- *    - Ensures XSS prevention works
- * 
- * 4. Added test for trimming in updateNote
- *    - Previously only tested in createNote
- *    - Ensures consistency across operations
- * 
- * 5. Improved "empty array" test
- *    - Made it more meaningful by checking status wasn't called
- *    - Shows 200 is the default (no explicit status call needed)
- * 
- * WHY THESE CHANGES:
- * - Closes test coverage gaps identified in code review
- * - Tests the bug fixes we added to controller
- * - Adds production-ready validation testing
- * - Increases overall test coverage from 85% to ~95%
- * 
- * TOTAL TESTS: 16 → 28 (12 new tests added)
- */
-
 // Mock the Note model
 jest.mock('../../src/models/Note');
 
@@ -138,9 +104,7 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Content validation - previously missing!
     it('should return 400 if content is empty after trimming', async () => {
-      // Tests the bug fix - content wasn't validated before
       // Arrange
       req.body = {
         title: 'Test Note',
@@ -157,7 +121,6 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Both fields empty
     it('should return 400 if both title and content are empty after trimming', async () => {
       // Tests that title validation happens first (order matters)
       // Arrange
@@ -198,9 +161,7 @@ describe('Note Controller', () => {
       expect(Note.create).toHaveBeenCalledWith('Test Note', 'Test Content');
     });
 
-    // NEW TEST: Title length validation
     it('should return 400 if title exceeds maximum length', async () => {
-      // Tests production-ready validation
       // Arrange
       const longTitle = 'a'.repeat(256); // 256 characters (max is 255)
       req.body = {
@@ -218,11 +179,9 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Content length validation
     it('should return 400 if content exceeds maximum length', async () => {
-      // Tests production-ready validation
       // Arrange
-      const longContent = 'a'.repeat(10001); // 10,001 characters (max is 10,000)
+      const longContent = 'a'.repeat(501); // 501 characters (max is 500)
       req.body = {
         title: 'Test Note',
         content: longContent
@@ -234,15 +193,11 @@ describe('Note Controller', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Content must be 10000 characters or less'
+        error: 'Content must be 500 characters or less'
       });
     });
 
-    // NEW TEST: Sanitization
     it('should sanitize HTML tags from title and content', async () => {
-      // Tests XSS prevention
-      // Note: Our sanitize function removes HTML tags but keeps the text content
-      // This is intentional - we want to preserve user's text while removing markup
       // Arrange
       req.body = {
         title: 'Test <script>alert("xss")</script> Note',
@@ -305,10 +260,7 @@ describe('Note Controller', () => {
       expect(res.json).toHaveBeenCalledWith(mockNotes);
     });
 
-    // IMPROVED TEST: Made more meaningful
     it('should return empty array and default 200 status when no notes exist', async () => {
-      // Previously this was considered "low value"
-      // Now it explicitly tests that 200 is the default (no status() call needed)
       // Arrange
       Note.findAll.mockResolvedValue([]);
 
@@ -317,7 +269,7 @@ describe('Note Controller', () => {
 
       // Assert
       expect(res.json).toHaveBeenCalledWith([]);
-      // Important: proves we don't explicitly set status for 200
+      // Proves we don't explicitly set status for 200
       expect(res.status).not.toHaveBeenCalled();
     });
 
@@ -426,9 +378,7 @@ describe('Note Controller', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    // NEW TEST: Content missing validation
     it('should return 400 if content is missing', async () => {
-      // Previously not tested for updateNote
       // Arrange
       req.params.id = '1';
       req.body = {
@@ -445,7 +395,6 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Empty title validation
     it('should return 400 if title is empty after trimming', async () => {
       // Arrange
       req.params.id = '1';
@@ -464,9 +413,7 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Empty content validation
     it('should return 400 if content is empty after trimming', async () => {
-      // Tests the bug fix for updateNote
       // Arrange
       req.params.id = '1';
       req.body = {
@@ -484,9 +431,7 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Trimming in update
     it('should trim whitespace from updated title and content', async () => {
-      // Previously only tested in createNote
       // Arrange
       req.params.id = '1';
       req.body = {
@@ -509,10 +454,9 @@ describe('Note Controller', () => {
       expect(Note.update).toHaveBeenCalledWith('1', 'Updated Title', 'Updated Content');
     });
 
-    // NEW TEST: Title length validation
     it('should return 400 if updated title exceeds maximum length', async () => {
       // Arrange
-      const longTitle = 'a'.repeat(256);
+      const longTitle = 'a'.repeat(256); // 256 characters (max is 255)
       req.params.id = '1';
       req.body = {
         title: longTitle,
@@ -529,10 +473,9 @@ describe('Note Controller', () => {
       });
     });
 
-    // NEW TEST: Content length validation
     it('should return 400 if updated content exceeds maximum length', async () => {
       // Arrange
-      const longContent = 'a'.repeat(10001);
+      const longContent = 'a'.repeat(501); // 501 characters (max is 500)
       req.params.id = '1';
       req.body = {
         title: 'Updated Title',
@@ -545,7 +488,7 @@ describe('Note Controller', () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Content must be 10000 characters or less'
+        error: 'Content must be 500 characters or less'
       });
     });
 

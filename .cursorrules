@@ -7,7 +7,7 @@ You are working on the QuickNote API backend built with Node.js and Express.
 - Uses PostgreSQL for data persistence
 - Follows test-driven development (TDD) practices
 - All database queries use parameterized queries ($1, $2) to prevent SQL injection
-- Current test coverage: 85% for controllers, 100% for routes
+- Current test coverage: 100% for controllers, 100% for routes
 
 ## Core Principles
 1. **Test-First Development**: Always write or update tests BEFORE changing implementation code
@@ -40,6 +40,8 @@ You are working on the QuickNote API backend built with Node.js and Express.
 - Always validate title and content are present
 - Trim whitespace from all string inputs
 - Reject empty strings after trimming
+- Enforce length limits: title max 255 characters, content max 500 characters
+- Sanitize inputs by stripping HTML tags before saving (XSS prevention)
 - Return descriptive error messages
 
 ### Environment Variables
@@ -84,8 +86,8 @@ npm run test:integration # Only integration tests
 ```
 
 ### Test Coverage Goals
-- Overall: >70%
-- Controllers: >80%
+- Overall: 100%
+- Controllers: 100%
 - Routes: 100%
 - New code should maintain or improve coverage
 
@@ -94,9 +96,9 @@ npm run test:integration # Only integration tests
 #### Unit Tests (noteController.test.js)
 Test each controller function in isolation:
 - ✅ Happy path (valid input, successful operation)
-- ✅ Validation errors (missing fields, empty strings)
+- ✅ Validation errors (missing fields, empty strings, length limits)
 - ✅ Database errors (mocked failures)
-- ✅ Edge cases (whitespace, special characters)
+- ✅ Edge cases (whitespace, special characters, HTML tags)
 
 Example test structure:
 ```javascript
@@ -263,7 +265,7 @@ src/
 ├── config/
 │   └── database.js     # PostgreSQL connection pool
 ├── controllers/
-│   └── noteController.js   # Request handlers, business logic
+│   └── noteController.js   # Request handlers, business logic, validation, sanitization
 ├── models/
 │   └── Note.js         # Database queries (SQL)
 ├── routes/
@@ -273,9 +275,9 @@ src/
 
 tests/
 ├── unit/
-│   └── noteController.test.js   # Test individual functions
+│   └── noteController.test.js   # Test individual functions (29 tests)
 └── integration/
-    └── noteRoutes.test.js       # Test full request/response
+    └── noteRoutes.test.js       # Test full request/response (8 tests)
 ```
 
 ## Common Mistakes to Avoid
@@ -286,11 +288,12 @@ tests/
 ❌ Using string concatenation in SQL
 ❌ Forgetting to handle errors
 ❌ Not trimming user input
+❌ Not sanitizing HTML from user input
 ❌ Committing .env files
 ❌ Lowering test coverage
 
 ✅ Write tests first
-✅ Validate all inputs
+✅ Validate all inputs (presence, empty, length, sanitization)
 ✅ Use try/catch everywhere
 ✅ Use parameterized queries
 ✅ Trim and sanitize input

@@ -93,7 +93,7 @@ http://localhost:3001/api
 | Field | Rules |
 |-------|-------|
 | `title` | Required, non-empty (after trimming whitespace), max 255 characters |
-| `content` | Required, non-empty (after trimming whitespace), max 10,000 characters |
+| `content` | Required, non-empty (after trimming whitespace), max 500 characters |
 
 Both fields are sanitized to strip HTML tags before saving.
 
@@ -195,7 +195,7 @@ routes/             |  100%   |  100%    |  100%   |  100%   |
 **37 tests** covering:
 - All CRUD happy paths
 - Content and title validation (empty, whitespace-only, missing)
-- Length limit enforcement (255 char title, 10,000 char content)
+- Length limit enforcement (255 char title, 500 char content)
 - XSS sanitization (HTML tag stripping)
 - Error handling and edge cases
 
@@ -280,7 +280,7 @@ npm run dev
 
 **SQL Injection Prevention** — All database queries use parameterized placeholders (`$1`, `$2`) instead of string concatenation.
 
-**Input Length Limits** — Title capped at 255 characters (matching the database `VARCHAR(255)` column), content capped at 10,000 characters to prevent abuse and performance issues.
+**Input Length Limits** — Title capped at 255 characters (matching the database `VARCHAR(255)` column), content capped at 500 characters to keep notes concise and prevent abuse.
 
 **Known Limitations (intentional for portfolio scope):** Rate limiting, authentication/authorization, HTTPS enforcement, and advanced content filtering are not implemented. These would add complexity without demonstrating the core full-stack skills this project targets.
 
