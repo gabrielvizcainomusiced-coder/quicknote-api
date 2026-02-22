@@ -45,7 +45,7 @@ quicknote-api/
 │   ├── unit/
 │   │   └── noteController.test.js    # 29 unit tests
 │   └── integration/
-│       └── noteRoutes.test.js        # 8 integration tests
+│       └── noteRoutes.test.js        # 12 integration tests
 ├── docker-compose.yml
 ├── Dockerfile
 ├── jest.config.js
@@ -136,12 +136,12 @@ const MAX_CONTENT_LENGTH = 500;
 ## Testing Strategy
 
 ### Coverage
-- **37 tests total**, 100% coverage on controllers and routes
+- **41 tests total**, 100% coverage on controllers and routes
 - `src/models/Note.js` intentionally excluded — contains raw DB queries, tested via integration tests with a live DB
 
 ### Test Files
 - `tests/unit/noteController.test.js` — 29 unit tests (mocks Note model)
-- `tests/integration/noteRoutes.test.js` — 8 integration tests
+- `tests/integration/noteRoutes.test.js` — 12 integration tests
 
 ### What's Tested
 - All CRUD happy paths
@@ -236,7 +236,7 @@ docker-compose logs db # view database logs
   - Security: Input sanitization (XSS prevention)
   - Bug fix: Content empty-string validation (was missing)
   - Validation: Length limits (255 title, 500 content)
-  - Testing: 100% coverage, 37 tests (up from 85%, 16 tests)
+  - Testing: 100% coverage, 41 tests (up from 85%, 16 tests)
   - Cleanup: Removed change-log comments from source files
 
 - **v1.0** (Jan 2026) — Initial release
@@ -271,7 +271,7 @@ These are enterprise concerns that would add complexity without demonstrating th
 > "Length limits match the app's intent — 255 for title matches VARCHAR(255) in the schema, and 500 for content enforces the sticky note / quick note design philosophy."
 
 **Test Quality:**
-> "I went from 85% to 100% coverage by adding 21 tests targeting validation, security, and edge cases. I also removed low-value tests that were just checking obvious behavior."
+> "I went from 85% to 100% coverage by adding 25 tests targeting validation, security, and edge cases. I also removed low-value tests that were just checking obvious behavior."
 
 ---
 
